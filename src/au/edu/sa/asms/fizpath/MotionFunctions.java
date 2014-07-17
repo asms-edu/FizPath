@@ -20,4 +20,13 @@ public class MotionFunctions{
 		
 	}
 	
+	public static double updateVelocity (float accelValues[], double mainCal, double currentVel, long deltaT){
+		currentVel=currentVel+((accelValues[1]-mainCal)*deltaT/1000);
+		return currentVel;
+	}
+	
+	public static double updatePosition (double currentVel, double currentDisplacement, long deltaT){
+		currentDisplacement=currentDisplacement+(currentVel*deltaT/1000);
+		return currentDisplacement;
+	}
 }
