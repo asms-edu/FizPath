@@ -1,5 +1,6 @@
 package au.edu.sa.asms.fizpath;
 
+// Any imports are listed here. In Eclipse, press ctl-shift-O to update this list automatically (cmd-shift-O for Mac)
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
@@ -33,11 +34,9 @@ public class MainActivity extends Activity implements SensorEventListener{
 //	
 	private SensorManager senSensorManager;	// gives us access to the device's sensors
 	private Sensor senAccelerometer;		// the proxy to access the accelerometer sensors
-
 	private int motionStage;	// stage of motion (0=waiting, 1=calibrating, 2=during motion, 3=potentially stopped, 4=stopped)
 	private double accelSum;	// container to hold cumulative sum of accelerometer values
 	private long accelCount;	// number of accelerometer values in accelSum
-	private long RestingYval;	// the value of the Y-axis accelerometer reading at rest found by average during motion stage 1
 	DataWord lastTime;	// the previous data word
 	DataWord thisTime;	// the current data word
 	private long TimeButtonPushed;	// when the start button was pushed (from systemClock.elapsedRealTime)
@@ -55,24 +54,18 @@ public class MainActivity extends Activity implements SensorEventListener{
 	public void onSensorChanged(SensorEvent event) {
 //		This procedure initiates every time a sensor value change is detected and is the starting
 //		point for most of this app's functionality
-//		Toast.makeText(getApplicationContext(), "Accel Changed", Toast.LENGTH_SHORT).show();	//temp debugging toast
 		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
-//			temp debugging
-//			TextView debugLabel =(TextView)findViewById(R.id.textView3);
-//			String LabelString2 = "DeltaT: " + String.valueOf(SystemClock.elapsedRealtime()-thisTime.timestamp);
-//			debugLabel.setText(LabelString2);
-
-			
-			lastTime.timestamp=thisTime.timestamp;
-			thisTime.timestamp = SystemClock.elapsedRealtime();
+			lastTime.timestamp=thisTime.timestamp;	//pass the time stamp from the previous sensor change to lastTime
+			thisTime.timestamp = SystemClock.elapsedRealtime(); //update time stamp
 			thisTime.linear = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
 			
 //			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
 
-			String LabelString;
+			String LabelString;	// this variable serves as the string to hold labels before being pushed to the screen
+
 			switch (motionStage){
-				case 0: if	((SystemClock.elapsedRealtime()-TimeButtonPushed)>waitTime){
+				case 0: if	((SystemClock.elapsedRealtime()-TimeButtonPushed)>waitTime){	// test if enough time has elapsed to move to stage 2
 							motionStage=1;
 							// determine initial calibration value and reset accelSum and accelCount
 							initialCal=accelSum/accelCount;
@@ -91,30 +84,29 @@ public class MainActivity extends Activity implements SensorEventListener{
 						}
 						else{ // if still waiting, keep calculating an average acceleration value
 							accelSum=accelSum+thisTime.linear[1];
-							accelCount++;
+							accelCount++;	// this is Java shorthand for "add one to accelCount"
 						}
 						break;
 				case 1:	if (Math.abs(thisTime.linear[1]-initialCal)>startTrigger){ // check if calibrated acceleration exceeds start trigger
 							motionStage=2;
-							mainCal=accelSum/accelCount;
+							mainCal=accelSum/accelCount;	// calculate calibration value for Y-axis that will be used during motion calculations
 //							set the on-screen label to the current motion stage
 						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
 							LabelString = "Motion Stage: " + String.valueOf(motionStage);
 							StageLabel.setText(LabelString);
 							
-							// update velocity and displacement values
+							// update velocity and displacement values (required as soon as Stage 2 is triggered)
 							currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 							currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
 						}
-						else{
-//							update the data to calculate an average acceleration value
+						else{	// still in stage 1 so keep calculating calibration values
 							accelSum=accelSum+thisTime.linear[1];
 							accelCount++;
 		
 //							set the on-screen label to the current calibration value
 							TextView CalLabel =(TextView)findViewById(R.id.textView5);
 							LabelString = "Y cal: " + String.valueOf(accelSum/accelCount) + "00000000000";
-							LabelString=LabelString.substring(0,18);
+							LabelString=LabelString.substring(0,18);	//trim off anything beyond 18 characters to avoic line wrap
 							CalLabel.setText(LabelString);
 						}
 						break;
@@ -129,9 +121,9 @@ public class MainActivity extends Activity implements SensorEventListener{
 						LabelString = "Y disp: " + String.valueOf(currentDisplacement);
 						DisplacementLabel.setText(LabelString);
 						
-						if (Math.abs(thisTime.linear[1]-mainCal)<stopTrigger){
+						if (Math.abs(thisTime.linear[1]-mainCal)<stopTrigger){	// check if acceleration value has fallen below threshold for stage 3
 							motionStage=3;
-							timeStage3=thisTime.timestamp;
+							timeStage3=thisTime.timestamp;	// this time is used to determine if the low acceleration is transient or actually the end of motion.
 //							set the on-screen label to the current motion stage
 						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
 							LabelString = "Motion Stage: " + String.valueOf(motionStage);
@@ -140,36 +132,37 @@ public class MainActivity extends Activity implements SensorEventListener{
 						
 						break;
 				case 3:// update velocity and displacement values
-					currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
-					currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
-//					update the on-screen label with new velocity and displacement values
-					VelLabel =(TextView)findViewById(R.id.textView3);
-					LabelString = "Y vel: " + String.valueOf(currentVelocity);
-					VelLabel.setText(LabelString);
-					DisplacementLabel =(TextView)findViewById(R.id.textView4);
-					LabelString = "Y disp: " + String.valueOf(currentDisplacement);
-					DisplacementLabel.setText(LabelString);
-					
-					if (Math.abs(thisTime.linear[1]-mainCal)>stopTrigger){
-						motionStage=2;
-//						set the on-screen label to the current motion stage
-					    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-						LabelString = "Motion Stage: " + String.valueOf(motionStage);
-						StageLabel.setText(LabelString);
-					}
-					else if ((thisTime.timestamp-timeStage3)>slowdownDuration){
-						motionStage=4;
-//						set the on-screen label to the current motion stage
-					    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-						LabelString = "Motion Stage: " + String.valueOf(motionStage);
-						StageLabel.setText(LabelString);
-					}
+						currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
+						currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
+	//					update the on-screen label with new velocity and displacement values
+						VelLabel =(TextView)findViewById(R.id.textView3);
+						LabelString = "Y vel: " + String.valueOf(currentVelocity);
+						VelLabel.setText(LabelString);
+						DisplacementLabel =(TextView)findViewById(R.id.textView4);
+						LabelString = "Y disp: " + String.valueOf(currentDisplacement);
+						DisplacementLabel.setText(LabelString);
+						
+						if (Math.abs(thisTime.linear[1]-mainCal)>stopTrigger){	//if acceleration rises again, revert to stage 2
+							motionStage=2;
+	//						set the on-screen label to the current motion stage
+						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
+							LabelString = "Motion Stage: " + String.valueOf(motionStage);
+							StageLabel.setText(LabelString);
+						}
+						else if ((thisTime.timestamp-timeStage3)>slowdownDuration){	//if acceleration has remained low long enough, move to stage 4
+							motionStage=4;
+	//						set the on-screen label to the current motion stage
+						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
+							LabelString = "Motion Stage: " + String.valueOf(motionStage);
+							StageLabel.setText(LabelString);
+						}
 						break;
 				case 4:
-						//thisTime.Linear=values;
+						// stopped - do nothing
 						break;
 			}
-				//				set the on-screen text label to a new Y-axis acceleration value
+
+//				set the on-screen text label to a new Y-axis acceleration value
 			    TextView accel_label =(TextView)findViewById(R.id.textView2);
 				String newmessage = String.valueOf(thisTime.linear[1]-initialCal);
 				accel_label.setText(newmessage);
@@ -183,12 +176,13 @@ public class MainActivity extends Activity implements SensorEventListener{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_main);	// set up screen
 		
+	// set up accelerometer
 		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 	    senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 	    senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_UI);
-		
+		// instantiate the custom class variables previously declared
 	    thisTime= new DataWord();
 	    lastTime= new DataWord();
 	    
@@ -196,20 +190,18 @@ public class MainActivity extends Activity implements SensorEventListener{
 			getFragmentManager().beginTransaction()
 					.add(R.id.container, new PlaceholderFragment()).commit();
 			motionStage=4;	// set to stopped until start button first pressed by user
-//			thisTime.timestamp=0;
-//			lastTime.timestamp=0;
 		}
 	}
 	
 	public void StartSequence(View view) {
 		// when the start button is pushed
 		motionStage=0;
-		TimeButtonPushed=SystemClock.elapsedRealtime();
-		thisTime.timestamp=SystemClock.elapsedRealtime();
-		currentVelocity=0;
-		currentDisplacement=0;
-		accelSum=0;
-		accelCount=0;
+		TimeButtonPushed=SystemClock.elapsedRealtime();	// used to determine the transition to stage 1
+		thisTime.timestamp=SystemClock.elapsedRealtime();	// set up a thisTime.timestamp value to pass to lastTime when onSensorChanged is first called
+		currentVelocity=0;	// reset velocity
+		currentDisplacement=0;	// reset displacement
+		accelSum=0;	// reset calibration values
+		accelCount=0;	// reset calibration values
 		
 //		set the on-screen labels to the current values
 	    TextView StageLabel =(TextView)findViewById(R.id.textView1);
@@ -271,16 +263,17 @@ public class MainActivity extends Activity implements SensorEventListener{
 	}
 		
 	protected void onResume() {
+		// Called when the app is resumed from pause
 	    super.onResume();
 	    senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_UI);
 	}
 	
-	private void colourScreen(float AccelValues[]){
+	private void colourScreen(float AccelValues[]){	// makes a background colour from 3-axis accelerometer values
 
 		LinearLayout view = (LinearLayout)findViewById(R.id.view);	// "view" allows access to screen properties
 		int[] ARGB = new int[4];	// an array of integers to store alpha (transparency), red, blue and green values
 
-		ARGB[0]= 127;	// set alpha to fully-opaque
+		ARGB[0]= 255;	// set alpha to fully-opaque
 		
 //		calculate RGB values from corresponding x,y and z acceleration values
 		for (int x=1; x<4; x=x+1){

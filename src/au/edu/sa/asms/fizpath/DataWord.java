@@ -1,13 +1,7 @@
 package au.edu.sa.asms.fizpath;
 
+// custom class to store all the relevant data with the corresponding time stamp. To be expanded as more fields are required
 public class DataWord {
-	long timestamp;
-	float [] linear = new float [3];
-
-	DataWord(){
-		timestamp=0;
-		linear[0] = (float) 0.0;
-		linear[1] = (float) 0.0;
-		linear[2] = (float) 0.0;
-	}
+	long timestamp;	// time (in ms)
+	float [] linear = new float [3];	// linear acceleration values
 }
