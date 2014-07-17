@@ -61,8 +61,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 			thisTime.linear = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
 			
 //			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
-
-			String LabelString;	// this variable serves as the string to hold labels before being pushed to the screen
+			UpdateScreenLabels();
 
 			switch (motionStage){
 				case 0: if	((SystemClock.elapsedRealtime()-TimeButtonPushed)>waitTime){	// test if enough time has elapsed to move to stage 2
@@ -71,30 +70,15 @@ public class MainActivity extends Activity implements SensorEventListener{
 							initialCal=accelSum/accelCount;
 							accelSum=0;
 							accelCount=0;
-							
-//							set the on-screen label to the current motion stage
-						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-							LabelString = "Motion Stage: " + String.valueOf(motionStage);
-							StageLabel.setText(LabelString);
-							
-//							set the on-screen label to the current calibration value
-							TextView CalLabel =(TextView)findViewById(R.id.textView5);
-							LabelString = "Y cal: " + String.valueOf(initialCal);
-							CalLabel.setText(LabelString);
 						}
 						else{ // if still waiting, keep calculating an average acceleration value
 							accelSum=accelSum+thisTime.linear[1];
 							accelCount++;	// this is Java shorthand for "add one to accelCount"
+							initialCal=accelSum/accelCount;
 						}
 						break;
 				case 1:	if (Math.abs(thisTime.linear[1]-initialCal)>startTrigger){ // check if calibrated acceleration exceeds start trigger
 							motionStage=2;
-							mainCal=accelSum/accelCount;	// calculate calibration value for Y-axis that will be used during motion calculations
-//							set the on-screen label to the current motion stage
-						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-							LabelString = "Motion Stage: " + String.valueOf(motionStage);
-							StageLabel.setText(LabelString);
-							
 							// update velocity and displacement values (required as soon as Stage 2 is triggered)
 							currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 							currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
@@ -102,59 +86,26 @@ public class MainActivity extends Activity implements SensorEventListener{
 						else{	// still in stage 1 so keep calculating calibration values
 							accelSum=accelSum+thisTime.linear[1];
 							accelCount++;
-		
-//							set the on-screen label to the current calibration value
-							TextView CalLabel =(TextView)findViewById(R.id.textView5);
-							LabelString = "Y cal: " + String.valueOf(accelSum/accelCount) + "00000000000";
-							LabelString=LabelString.substring(0,18);	//trim off anything beyond 18 characters to avoic line wrap
-							CalLabel.setText(LabelString);
 						}
+						mainCal=accelSum/accelCount;	// calculate calibration value for Y-axis that will be used during motion calculations
 						break;
 				case 2: // update velocity and displacement values
 						currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 						currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
-//						update the on-screen label with new velocity and displacement values
-						TextView VelLabel =(TextView)findViewById(R.id.textView3);
-						LabelString = "Y vel: " + String.valueOf(currentVelocity);
-						VelLabel.setText(LabelString);
-						TextView DisplacementLabel =(TextView)findViewById(R.id.textView4);
-						LabelString = "Y disp: " + String.valueOf(currentDisplacement);
-						DisplacementLabel.setText(LabelString);
-						
 						if (Math.abs(thisTime.linear[1]-mainCal)<stopTrigger){	// check if acceleration value has fallen below threshold for stage 3
 							motionStage=3;
 							timeStage3=thisTime.timestamp;	// this time is used to determine if the low acceleration is transient or actually the end of motion.
-//							set the on-screen label to the current motion stage
-						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-							LabelString = "Motion Stage: " + String.valueOf(motionStage);
-							StageLabel.setText(LabelString);
 						}
-						
 						break;
 				case 3:// update velocity and displacement values
 						currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 						currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
-	//					update the on-screen label with new velocity and displacement values
-						VelLabel =(TextView)findViewById(R.id.textView3);
-						LabelString = "Y vel: " + String.valueOf(currentVelocity);
-						VelLabel.setText(LabelString);
-						DisplacementLabel =(TextView)findViewById(R.id.textView4);
-						LabelString = "Y disp: " + String.valueOf(currentDisplacement);
-						DisplacementLabel.setText(LabelString);
 						
 						if (Math.abs(thisTime.linear[1]-mainCal)>stopTrigger){	//if acceleration rises again, revert to stage 2
 							motionStage=2;
-	//						set the on-screen label to the current motion stage
-						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-							LabelString = "Motion Stage: " + String.valueOf(motionStage);
-							StageLabel.setText(LabelString);
 						}
 						else if ((thisTime.timestamp-timeStage3)>slowdownDuration){	//if acceleration has remained low long enough, move to stage 4
 							motionStage=4;
-	//						set the on-screen label to the current motion stage
-						    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-							LabelString = "Motion Stage: " + String.valueOf(motionStage);
-							StageLabel.setText(LabelString);
 						}
 						break;
 				case 4:
@@ -162,10 +113,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 						break;
 			}
 
-//				set the on-screen text label to a new Y-axis acceleration value
-			    TextView accel_label =(TextView)findViewById(R.id.textView2);
-				String newmessage = String.valueOf(thisTime.linear[1]-initialCal);
-				accel_label.setText(newmessage);
 
 		}
 	}
@@ -202,17 +149,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 		currentDisplacement=0;	// reset displacement
 		accelSum=0;	// reset calibration values
 		accelCount=0;	// reset calibration values
-		
-//		set the on-screen labels to the current values
-	    TextView StageLabel =(TextView)findViewById(R.id.textView1);
-		String LabelString = "Motion Stage: " + String.valueOf(motionStage);
-		StageLabel.setText(LabelString);
-		TextView VelLabel =(TextView)findViewById(R.id.textView3);
-		LabelString = "Y vel: " + String.valueOf(currentVelocity);
-		VelLabel.setText(LabelString);
-		TextView DisplacementLabel =(TextView)findViewById(R.id.textView4);
-		LabelString = "Y disp: " + String.valueOf(currentDisplacement);
-		DisplacementLabel.setText(LabelString);
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -266,6 +202,57 @@ public class MainActivity extends Activity implements SensorEventListener{
 		// Called when the app is resumed from pause
 	    super.onResume();
 	    senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_UI);
+	}
+	
+	private void UpdateScreenLabels (){
+//		this routine updates the screen labels to reflect current values
+		
+//		initialise variables
+		String labelString;	// string to hold next label to be updated
+	    TextView StageLabel =(TextView)findViewById(R.id.textView1);
+	    TextView AccelLabel =(TextView)findViewById(R.id.textView2);
+	    TextView VelLabel =(TextView)findViewById(R.id.textView3);
+	    TextView DispLabel =(TextView)findViewById(R.id.textView4);
+	    TextView CalLabel =(TextView)findViewById(R.id.textView5);
+	    labelString="Stage: ";
+	    
+		switch (motionStage) {	// set motion stage label according to value (with explanatory word)
+		case 0: labelString = "Stage: 0 (waiting)";
+		break;
+		case 1: labelString = "Stage: 1 (calibrating)";
+		break;
+		case 2: labelString = "Stage 2 (moving)";
+		break;
+		case 3: labelString = "Stage: 3 (slowing)";
+		break;
+		case 4: labelString = "Stage: 4 (stopped)";
+		break;
+		}
+		StageLabel.setText(labelString);
+		labelString="Y-accel: " + String.valueOf(thisTime.linear[1])+"000000000000000000";
+		AccelLabel.setText(labelString.substring(0,18));
+		labelString="Y-vel: " + String.valueOf(currentVelocity)+"000000000000000000";
+		VelLabel.setText(labelString.substring(0,18));
+		labelString="Y-disp: " + String.valueOf(currentDisplacement)+"00000000000000";
+		DispLabel.setText(labelString.substring(0,18));
+		
+		switch (motionStage) {	// select the appropriate calibration variable depending on motion stage
+		case 0: labelString = "Y-Cal: " + String.valueOf(initialCal)+"00000000000000";
+		labelString=labelString.substring(0,18);
+		break;
+		case 1: labelString = "Y-Cal: " + String.valueOf(mainCal)+"00000000000000";
+		labelString=labelString.substring(0,18);
+		break;
+		case 2: labelString = "Y-Cal: " + String.valueOf(mainCal)+"00000000000000";
+		labelString=labelString.substring(0,18);
+		break;
+		case 3: labelString = "Y-Cal: " + String.valueOf(mainCal)+"00000000000000";
+		labelString=labelString.substring(0,18);
+		break;
+		case 4: labelString = "N/A";
+		break;
+		}
+		CalLabel.setText(labelString);
 	}
 	
 	private void colourScreen(float AccelValues[]){	// makes a background colour from 3-axis accelerometer values
