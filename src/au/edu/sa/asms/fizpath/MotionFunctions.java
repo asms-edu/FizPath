@@ -21,13 +21,15 @@ public class MotionFunctions{
 	}
 	
 	// calculate a new velocity value given previous velocity, acceleration (and calibration value) and time interval
-	public static double updateVelocity (float accelValues[], double mainCal, double currentVel, long deltaT){
-		currentVel=currentVel+((accelValues[1]-mainCal)*deltaT/1000);
+	public static double[] updateVelocity (double Calibration[], DataWord thisTime, DataWord lastTime){
+		double [] currentVel=lastTime.linearVelocity;
+		currentVel[1] =	currentVel[1]+(thisTime.linearAccel[1]-Calibration[1])*((thisTime.timestamp-lastTime.timestamp)/1000);
 		return currentVel;
 	}
 	// calculate a new displacement value given previous displacement, current velocity and time interval	
-	public static double updatePosition (double currentVel, double currentDisplacement, long deltaT){
-		currentDisplacement=currentDisplacement+(currentVel*deltaT/1000);
+	public static double [] updatePosition (DataWord thisTime, DataWord lastTime){
+		double[] currentDisplacement = lastTime.linearDisplacement;
+		currentDisplacement[1]=currentDisplacement[1]+(thisTime.linearVelocity[1]*(thisTime.timestamp-lastTime.timestamp)/1000);
 		return currentDisplacement;
 	}
 }
