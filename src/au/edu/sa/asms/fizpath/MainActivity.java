@@ -42,8 +42,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 	private long TimeButtonPushed;	// when the start button was pushed (from systemClock.elapsedRealTime)
 	private long timeStage3;			// time when stage 3 was most recently triggered
 	private static long slowdownDuration=50;	// duration (in ms) that stage 3 must last to confirm motion completed.
-	private double currentVelocity;	// current velocity in the ground-based frame of reference
-	private double currentDisplacement; // current displacement from location where start button was pushed
+	//private double currentVelocity;	// current velocity in the ground-based frame of reference
+	//private double currentDisplacement; // current displacement from location where start button was pushed
 	private static int waitTime=150;	// time (in ms) that the system waits after the start button is pushed before calibrating (to allow for the handling vibrations to dissipate)
 	private static double startTrigger=0.2;	// acceleration (in m/s/s) above ambient that indicates that motion has begun
 	private static double stopTrigger=0.1;	// threshold below which motion may have stopped
@@ -58,7 +58,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 
 			lastTime.timestamp=thisTime.timestamp;	//pass the time stamp from the previous sensor change to lastTime
 			thisTime.timestamp = SystemClock.elapsedRealtime(); //update time stamp
-			thisTime.linear = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
+			thisTime.linearAccel = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
 			
 //			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
 			UpdateScreenLabels();
@@ -72,36 +72,36 @@ public class MainActivity extends Activity implements SensorEventListener{
 							accelCount=0;
 						}
 						else{ // if still waiting, keep calculating an average acceleration value
-							accelSum=accelSum+thisTime.linear[1];
+							accelSum=accelSum+thisTime.linearAccel[1];
 							accelCount++;	// this is Java shorthand for "add one to accelCount"
 							initialCal=accelSum/accelCount;
 						}
 						break;
-				case 1:	if (Math.abs(thisTime.linear[1]-initialCal)>startTrigger){ // check if calibrated acceleration exceeds start trigger
+				case 1:	if (Math.abs(thisTime.linearAccel[1]-initialCal)>startTrigger){ // check if calibrated acceleration exceeds start trigger
 							motionStage=2;
 							// update velocity and displacement values (required as soon as Stage 2 is triggered)
-							currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
+							currentVelocity = MotionFunctions.updateVelocity(thisTime.linearAccel, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 							currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
 						}
 						else{	// still in stage 1 so keep calculating calibration values
-							accelSum=accelSum+thisTime.linear[1];
+							accelSum=accelSum+thisTime.linearAccel[1];
 							accelCount++;
 						}
 						mainCal=accelSum/accelCount;	// calculate calibration value for Y-axis that will be used during motion calculations
 						break;
 				case 2: // update velocity and displacement values
-						currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
+						currentVelocity = MotionFunctions.updateVelocity(thisTime.linearAccel, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 						currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
-						if (Math.abs(thisTime.linear[1]-mainCal)<stopTrigger){	// check if acceleration value has fallen below threshold for stage 3
+						if (Math.abs(thisTime.linearAccel[1]-mainCal)<stopTrigger){	// check if acceleration value has fallen below threshold for stage 3
 							motionStage=3;
 							timeStage3=thisTime.timestamp;	// this time is used to determine if the low acceleration is transient or actually the end of motion.
 						}
 						break;
 				case 3:// update velocity and displacement values
-						currentVelocity = MotionFunctions.updateVelocity(thisTime.linear, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
+						currentVelocity = MotionFunctions.updateVelocity(thisTime.linearAccel, mainCal, currentVelocity, (thisTime.timestamp-lastTime.timestamp));
 						currentDisplacement = MotionFunctions.updatePosition(currentVelocity, currentDisplacement, (thisTime.timestamp-lastTime.timestamp));
 						
-						if (Math.abs(thisTime.linear[1]-mainCal)>stopTrigger){	//if acceleration rises again, revert to stage 2
+						if (Math.abs(thisTime.linearAccel[1]-mainCal)>stopTrigger){	//if acceleration rises again, revert to stage 2
 							motionStage=2;
 						}
 						else if ((thisTime.timestamp-timeStage3)>slowdownDuration){	//if acceleration has remained low long enough, move to stage 4
@@ -221,7 +221,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		case 1: labelString = "Stage: 1 (calibrating)";
 		break;
-		case 2: labelString = "Stage 2 (moving)";
+		case 2: labelString = "Stage: 2 (moving)";
 		break;
 		case 3: labelString = "Stage: 3 (slowing)";
 		break;
@@ -229,7 +229,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		}
 		StageLabel.setText(labelString);
-		labelString="Y-accel: " + String.valueOf(thisTime.linear[1])+"000000000000000000";
+		labelString="Y-accel: " + String.valueOf(thisTime.linearAccel[1])+"000000000000000000";
 		AccelLabel.setText(labelString.substring(0,18));
 		labelString="Y-vel: " + String.valueOf(currentVelocity)+"000000000000000000";
 		VelLabel.setText(labelString.substring(0,18));
