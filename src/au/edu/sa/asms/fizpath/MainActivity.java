@@ -32,6 +32,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 //		- variable name. By convention multiple words are connected with underscores or by capitalising each word
 //		- variable class (usually imported but can be a private class you write yourself)
 //	
+	public String debugtemp;	// temporary debugging variable
+	
 	private SensorManager senSensorManager;	// gives us access to the device's sensors
 	private Sensor senAccelerometer;		// the proxy to access the accelerometer sensors
 	private int motionStage;	// stage of motion (0=waiting, 1=calibrating, 2=during motion, 3=potentially stopped, 4=stopped)
@@ -40,15 +42,12 @@ public class MainActivity extends Activity implements SensorEventListener{
 	private long TimeButtonPushed;	// when the start button was pushed (from systemClock.elapsedRealTime)
 	private long timeStage3;			// time when stage 3 was most recently triggered
 	private static long slowdownDuration=50;	// duration (in ms) that stage 3 must last to confirm motion completed.
-	//private double currentVelocity;	// current velocity in the ground-based frame of reference
-	//private double currentDisplacement; // current displacement from location where start button was pushed
 	private static int waitTime=150;	// time (in ms) that the system waits after the start button is pushed before calibrating (to allow for the handling vibrations to dissipate)
 	private static double startTrigger=0.2;	// acceleration (in m/s/s) above ambient that indicates that motion has begun
 	private static double stopTrigger=0.1;	// threshold below which motion may have stopped
 	private double [] accelSum;	// container to hold cumulative sum of accelerometer values for each axis (0=x, 1=y, 2=z)
 	private long accelCount;	// number of accelerometer values in accelSum
 	private double [] calibration;	// the acceleration correction for each axis (0=x, 1=y, 2=z)
-//	private double mainCal;		// the calibration value calculated over stage 2 and used to correct all acceleration values during motion)
 	
 	@Override
 	public void onSensorChanged(SensorEvent event) {
@@ -61,7 +60,9 @@ public class MainActivity extends Activity implements SensorEventListener{
 			thisTime.timestamp = SystemClock.elapsedRealtime(); //update time stamp
 			thisTime.linearAccel = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
 			
-//			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
+			debugtemp = String.valueOf((thisTime.linearAccel[1]-calibration[1]));
+
+			//			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
 			UpdateScreenLabels();
 
 			switch (motionStage){
@@ -83,7 +84,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 							// update velocity and displacement values (required as soon as Stage 2 is triggered)
 							thisTime.linearVelocity = MotionFunctions.updateVelocity(calibration, thisTime, lastTime);
 							thisTime.linearDisplacement = MotionFunctions.updatePosition(thisTime, lastTime);
-
 						}
 						else{	// still in stage 1 so keep calculating calibration values
 							accelSum[1]=accelSum[1]+thisTime.linearAccel[1];
@@ -94,6 +94,8 @@ public class MainActivity extends Activity implements SensorEventListener{
 				case 2: // update velocity and displacement values
 						thisTime.linearVelocity = MotionFunctions.updateVelocity(calibration, thisTime, lastTime);
 						thisTime.linearDisplacement = MotionFunctions.updatePosition(thisTime, lastTime);
+//						Toast.makeText(getApplicationContext(), String.valueOf(((thisTime.timestamp-lastTime.timestamp)/1000)), Toast.LENGTH_SHORT).show();
+						
 						if (Math.abs(thisTime.linearAccel[1]-calibration[1])<stopTrigger){	// check if acceleration value has fallen below threshold for stage 3
 							motionStage=3;
 							timeStage3=thisTime.timestamp;	// this time is used to determine if the low acceleration is transient or actually the end of motion.
@@ -242,22 +244,23 @@ public class MainActivity extends Activity implements SensorEventListener{
 		labelString="Y-disp: " + String.valueOf(thisTime.linearDisplacement[1])+"00000000000000";
 		DispLabel.setText(labelString.substring(0,18));
 		
-		switch (motionStage) {	// select the appropriate calibration variable depending on motion stage
-		case 0: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
-		labelString=labelString.substring(0,18);
-		break;
-		case 1: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
-		labelString=labelString.substring(0,18);
-		break;
-		case 2: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
-		labelString=labelString.substring(0,18);
-		break;
-		case 3: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
-		labelString=labelString.substring(0,18);
-		break;
-		case 4: labelString = "Y-Cal: N/A";
-		break;
-		}
+//		switch (motionStage) {	// select the appropriate calibration variable depending on motion stage
+//		case 0: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
+//		labelString=labelString.substring(0,18);
+//		break;
+//		case 1: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
+//		labelString=labelString.substring(0,18);
+//		break;
+//		case 2: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
+//		labelString=labelString.substring(0,18);
+//		break;
+//		case 3: labelString = "Y-Cal: " + String.valueOf(calibration[1])+"00000000000000";
+//		labelString=labelString.substring(0,18);
+//		break;
+//		case 4: labelString = "Y-Cal: N/A";
+//		break;
+//		}
+		labelString=debugtemp;
 		CalLabel.setText(labelString);
 	}
 	

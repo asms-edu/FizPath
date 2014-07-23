@@ -1,5 +1,7 @@
 package au.edu.sa.asms.fizpath;
 
+import android.widget.Toast;
+
 public class MotionFunctions{
 	
 	public static int TrimmedColour (double LowerBound, double UpperBound, double CurrentValue) {
@@ -21,9 +23,12 @@ public class MotionFunctions{
 	}
 	
 	// calculate a new velocity value given previous velocity, acceleration (and calibration value) and time interval
-	public static double[] updateVelocity (double Calibration[], DataWord thisTime, DataWord lastTime){
-		double [] currentVel=lastTime.linearVelocity;
-		currentVel[1] =	currentVel[1]+(thisTime.linearAccel[1]-Calibration[1])*((thisTime.timestamp-lastTime.timestamp)/1000);
+	public static double[] updateVelocity (double calibration[], DataWord thisTime, DataWord lastTime){
+		double [] currentVel;
+		currentVel = new double[3];
+		currentVel[0] = 0;
+		currentVel[1] =	thisTime.linearVelocity[1]+(thisTime.linearAccel[1]-calibration[1])*((thisTime.timestamp-lastTime.timestamp)/1000);
+		currentVel[2] = 0;
 		return currentVel;
 	}
 	// calculate a new displacement value given previous displacement, current velocity and time interval	
