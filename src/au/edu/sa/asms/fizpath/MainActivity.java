@@ -229,11 +229,11 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		}
 		StageLabel.setText(labelString);
-		labelString="Y-accel: " + String.valueOf(thisTime.linear[1])+"000000000000000000";
+		labelString="Y-accel (m/s^2): " + String.valueOf(thisTime.linear[1])+"000000000000000000";
 		AccelLabel.setText(labelString.substring(0,18));
-		labelString="Y-vel: " + String.valueOf(currentVelocity)+"000000000000000000";
+		labelString="Y-vel(m/s): " + String.valueOf(currentVelocity)+"000000000000000000";
 		VelLabel.setText(labelString.substring(0,18));
-		labelString="Y-disp: " + String.valueOf(currentDisplacement)+"00000000000000";
+		labelString="Y-disp(m): " + String.valueOf(currentDisplacement)+"00000000000000";
 		DispLabel.setText(labelString.substring(0,18));
 		
 		switch (motionStage) {	// select the appropriate calibration variable depending on motion stage
