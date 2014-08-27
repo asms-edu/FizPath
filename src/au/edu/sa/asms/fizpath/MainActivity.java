@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import au.edu.sa.asms.fizpath.dataio.DataManager;
 
 //Declare the main class (this is where the App starts running)
 //
@@ -55,10 +56,11 @@ public class MainActivity extends Activity implements SensorEventListener{
 //		This procedure initiates every time a sensor value change is detected and is the starting
 //		point for most of this app's functionality
 		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
-			lastTime.timestamp=thisTime.timestamp;	//pass the time stamp from the previous sensor change to lastTime
-			thisTime.timestamp = SystemClock.elapsedRealtime(); //update time stamp
-			thisTime.linear = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
+			
+			lastTime = thisTime;	//pass the time stamp from the previous sensor change to lastTime
+			// accelerometer value array ([0] for x, [1] for y and [2] for z)
+			thisTime = new DataWord(SystemClock.elapsedRealtime(), event.values);//update time stamp
+			DataManager.addMAINDATA(thisTime);
 			
 //			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
 			UpdateScreenLabels();
