@@ -216,6 +216,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 	    TextView VelLabel =(TextView)findViewById(R.id.textView3);
 	    TextView DispLabel =(TextView)findViewById(R.id.textView4);
 	    TextView CalLabel =(TextView)findViewById(R.id.textView5);
+	    TextView DataLength =(TextView)findViewById(R.id.Datalength);
 	    labelString="Stage: ";
 	    
 		switch (motionStage) {	// set motion stage label according to value (with explanatory word)
@@ -255,6 +256,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		}
 		CalLabel.setText(labelString);
+		DataLength.setText(DataManager.MAINDATA.size() + " iterators in memory");
 	}
 	
 	private void colourScreen(float AccelValues[]){	// makes a background colour from 3-axis accelerometer values

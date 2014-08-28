@@ -58,11 +58,19 @@
 
 	<Button
 	    android:id="@+id/button1"
-	    android:layout_width="244dp"
-	    android:layout_height="50dp"
+	    android:layout_width="139dp"
+	    android:layout_height="wrap_content"
 	    android:layout_gravity="center"
 	    android:onClick="StartSequence"
 	    android:text="Start"
+	    android:textSize="20sp"
 	    android:visibility="visible" />
+
+	<TextView
+	    android:id="@+id/Datalength"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="bottom|right"
+	    android:text="Dl" />
 	
 </LinearLayout>
