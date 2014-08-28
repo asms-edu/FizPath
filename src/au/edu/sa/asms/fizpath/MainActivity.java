@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import au.edu.sa.asms.fizpath.dataio.DataManager;
 
 //Declare the main class (this is where the App starts running)
 //
@@ -55,10 +56,11 @@ public class MainActivity extends Activity implements SensorEventListener{
 //		This procedure initiates every time a sensor value change is detected and is the starting
 //		point for most of this app's functionality
 		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
-			lastTime.timestamp=thisTime.timestamp;	//pass the time stamp from the previous sensor change to lastTime
-			thisTime.timestamp = SystemClock.elapsedRealtime(); //update time stamp
-			thisTime.linear = event.values;	// accelerometer value array ([0] for x, [1] for y and [2] for z)
+			
+			lastTime = thisTime;	//pass the time stamp from the previous sensor change to lastTime
+			// accelerometer value array ([0] for x, [1] for y and [2] for z)
+			thisTime = new DataWord(SystemClock.elapsedRealtime(), event.values);//update time stamp
+			DataManager.addMAINDATA(thisTime);
 			
 //			colourScreen(values);	// set the screen background colour according to acceleration values (this can be commented out if preferred)
 			UpdateScreenLabels();
@@ -214,6 +216,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 	    TextView VelLabel =(TextView)findViewById(R.id.textView3);
 	    TextView DispLabel =(TextView)findViewById(R.id.textView4);
 	    TextView CalLabel =(TextView)findViewById(R.id.textView5);
+	    TextView DataLength =(TextView)findViewById(R.id.Datalength);
 	    labelString="Stage: ";
 	    
 		switch (motionStage) {	// set motion stage label according to value (with explanatory word)
@@ -229,11 +232,11 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		}
 		StageLabel.setText(labelString);
-		labelString="Y-accel: " + String.valueOf(thisTime.linear[1])+"000000000000000000";
+		labelString="Y-accel (m/s^2): " + String.valueOf(thisTime.linear[1])+"000000000000000000";
 		AccelLabel.setText(labelString.substring(0,18));
-		labelString="Y-vel: " + String.valueOf(currentVelocity)+"000000000000000000";
+		labelString="Y-vel(m/s): " + String.valueOf(currentVelocity)+"000000000000000000";
 		VelLabel.setText(labelString.substring(0,18));
-		labelString="Y-disp: " + String.valueOf(currentDisplacement)+"00000000000000";
+		labelString="Y-disp(m): " + String.valueOf(currentDisplacement)+"00000000000000";
 		DispLabel.setText(labelString.substring(0,18));
 		
 		switch (motionStage) {	// select the appropriate calibration variable depending on motion stage
@@ -253,6 +256,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 		break;
 		}
 		CalLabel.setText(labelString);
+		DataLength.setText(DataManager.MAINDATA.size() + " iterators in memory");
 	}
 	
 	private void colourScreen(float AccelValues[]){	// makes a background colour from 3-axis accelerometer values
